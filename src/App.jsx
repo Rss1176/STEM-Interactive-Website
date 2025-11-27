@@ -124,10 +124,30 @@ export default function App() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); 
   const [showResetConfirm, setShowResetConfirm] = useState(false); 
-  const [siteData, setSiteData] = useState(DEFAULT_SITE_DATA);
+
+  const [siteData, setSiteData] = useState(() => {
+    const savedData = localStorage.getItem('dxc_site_data');
+    if (savedData) {
+      try {
+        return JSON.parse(savedData);
+      } catch (error) {
+        console.error("Failed to parse saved data", error);
+        return DEFAULT_SITE_DATA;
+      }
+    }
+    return DEFAULT_SITE_DATA;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('dxc_site_data', JSON.stringify(siteData));
+  }, [siteData]);
 
   const updateData = (key, value) => setSiteData(prev => ({ ...prev, [key]: value }));
-  const confirmReset = () => { setSiteData({ ...DEFAULT_SITE_DATA }); setShowResetConfirm(false); };
+  
+  const confirmReset = () => { 
+      setSiteData({ ...DEFAULT_SITE_DATA }); 
+      setShowResetConfirm(false); 
+  };
 
   const generateRawHTML = () => {
     const renderImages = () => {
@@ -171,7 +191,7 @@ export default function App() {
     <div className="h-screen bg-slate-900 text-slate-100 flex flex-col font-sans overflow-hidden">
       <header className="bg-slate-800 border-b border-slate-700 p-3 flex justify-between items-center shadow-lg z-10 shrink-0 h-16 flex-none">
         <div className="flex items-center gap-3">
-          <img src="DXCTechnologyLogo.png" alt="DXC Technology Logo" className="h-8 w-auto object-contain" />
+          {/* Logo removed from header, now in sidebar */}
           <div>
             <h1 className="font-bold text-lg text-white leading-tight">DXC Website Builder</h1>
             <div className="flex items-center gap-2">
@@ -196,6 +216,24 @@ export default function App() {
 
       <div className="flex-1 flex overflow-hidden relative">
         <div className={`w-20 ${isSidebarOpen ? 'md:w-64' : 'md:w-20'} bg-slate-900 border-r border-slate-700 flex flex-col shrink-0 transition-all duration-300 ease-in-out overflow-hidden`}>
+            
+            {/* --- LOGO SECTION --- */}
+            <div className="h-16 flex items-center justify-center p-3 border-b border-slate-800 shrink-0 bg-slate-900">
+                {/* Mobile & Collapsed: Vertical Logo */}
+                <img 
+                    src="DXC Logo_Vertical_White RGB.png" 
+                    alt="DXC Logo" 
+                    className={`h-full w-auto object-contain ${isSidebarOpen ? 'md:hidden' : 'block'}`} 
+                />
+                
+                {/* Desktop Expanded: Horizontal Logo */}
+                <img 
+                    src="DXC Logo Horiz_White RGB.png" 
+                    alt="DXC Logo" 
+                    className={`h-full w-auto object-contain hidden ${isSidebarOpen ? 'md:block' : ''}`} 
+                />
+            </div>
+
             <div className="p-4 border-b border-slate-800 flex justify-between items-center h-[53px] flex-none">
                 <span className={`text-xs font-bold text-slate-500 uppercase tracking-wider hidden ${isSidebarOpen ? 'md:block' : ''}`}>Difficulty</span>
                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-slate-500 hover:text-white hidden md:block p-1 rounded hover:bg-slate-800">
