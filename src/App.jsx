@@ -118,13 +118,34 @@ const DEFAULT_SITE_DATA = {
 };
 
 export default function App() {
-  const [difficulty, setDifficulty] = useState('basic'); 
+  // --- PERSIST DIFFICULTY STATE ---
+  // Initialize directly from localStorage to prevent overwriting on first render
+  const [difficulty, setDifficulty] = useState(() => {
+    const saved = localStorage.getItem('dxc_difficulty');
+    return saved || 'basic';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('dxc_difficulty', difficulty);
+  }, [difficulty]);
+
   const [activeTab, setActiveTab] = useState('editor'); 
   const [showRawCode, setShowRawCode] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); 
   const [showResetConfirm, setShowResetConfirm] = useState(false); 
+  const [isCopied, setIsCopied] = useState(false);
 
+  // --- PERSIST SIDEBAR STATE ---
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('dxc_sidebar_open');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('dxc_sidebar_open', JSON.stringify(isSidebarOpen));
+  }, [isSidebarOpen]);
+
+  // --- PERSIST SITE DATA ---
   const [siteData, setSiteData] = useState(() => {
     const savedData = localStorage.getItem('dxc_site_data');
     if (savedData) {
@@ -146,7 +167,14 @@ export default function App() {
   
   const confirmReset = () => { 
       setSiteData({ ...DEFAULT_SITE_DATA }); 
+      setDifficulty('basic');
       setShowResetConfirm(false); 
+  };
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(generateRawHTML());
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   const generateRawHTML = () => {
@@ -296,7 +324,7 @@ export default function App() {
                             <div className="hover:bg-slate-800/50 -ml-2 pl-2 rounded"><span className="text-slate-500">{'<!-- Navigation -->'}</span><br/><span className="text-blue-400">{'<nav'}</span> <span className="text-blue-300">class</span>=<span className="text-orange-400">"top-bar"</span><span className="text-blue-400">{'>'}</span><br/>&nbsp;&nbsp;<span className="text-blue-400">{'<h1>'}</span><AutoWidthInput value={siteData.navTitle} onChange={(e) => updateData('navTitle', e.target.value)} /><span className="text-blue-400">{'</h1>'}</span><br/><span className="text-blue-400">{'</nav>'}</span></div>
                             <div className="hover:bg-slate-800/50 -ml-2 pl-2 rounded"><span className="text-slate-500">{'<!-- Hero Banner -->'}</span><br/><span className="text-blue-400">{'<div'}</span> <span className="text-blue-300">class</span>=<span className="text-orange-400">"main-banner"</span><span className="text-blue-400">{'>'}</span><br/>&nbsp;&nbsp;<span className="text-blue-400">{'<h1>'}</span><AutoWidthInput value={siteData.bannerTitle} onChange={(e) => updateData('bannerTitle', e.target.value)} className="font-bold" /><span className="text-blue-400">{'</h1>'}</span><br/>&nbsp;&nbsp;<span className="text-blue-400">{'<p>'}</span><AutoWidthInput value={siteData.bannerSubtitle} onChange={(e) => updateData('bannerSubtitle', e.target.value)} className="italic text-slate-400" /><span className="text-blue-400">{'</p>'}</span><br/><span className="text-blue-400">{'</div>'}</span></div>
                             <div className="hover:bg-slate-800/50 -ml-2 pl-2 rounded"><span className="text-slate-500">{'<!-- Content Card -->'}</span><br/><span className="text-blue-400">{'<div'}</span> <span className="text-blue-300">class</span>=<span className="text-orange-400">"info-box"</span><span className="text-blue-400">{'>'}</span><br/>&nbsp;&nbsp;<span className="text-blue-400">{'<h2>'}</span><AutoWidthInput value={siteData.infoTitle} onChange={(e) => updateData('infoTitle', e.target.value)} /><span className="text-blue-400">{'</h2>'}</span><br/>&nbsp;&nbsp;<span className="text-blue-400">{'<p>'}</span><AutoWidthInput value={siteData.infoText} onChange={(e) => updateData('infoText', e.target.value)} /><span className="text-blue-400">{'</p>'}</span><br/>&nbsp;&nbsp;<span className="text-purple-400">show_image</span> = <StyledSelect value={siteData.showImage} onChange={(e) => updateData('showImage', e.target.value)} options={[{val: "yes", label: "yes"},{val: "no", label: "no"},]} /><br/>
-                            {siteData.showImage === 'yes' && (<div className="ml-4 mt-2 p-3 border-2 border-dashed border-yellow-500/30 rounded bg-slate-800/40 relative"><div className="absolute -top-3 left-3 bg-[#1e1e1e] px-2 text-xs text-yellow-500 font-bold">Gallery Settings</div><div className="flex items-center gap-2 mb-2 mt-1"><span className="text-slate-400 text-xs">{'// Number of images:'}</span><StyledSelect value={siteData.imageCount} onChange={(e) => updateData('imageCount', e.target.value)} options={[{val: "1", label: "1"},{val: "2", label: "2"},{val: "3", label: "3"},]} /></div><div className="mb-2"><span className="text-blue-400">{'<img'}</span> <span className="text-blue-300">src</span>=<span className="text-orange-400">"</span><AutoWidthInput value={siteData.imageSrc} onChange={(e) => updateData('imageSrc', e.target.value)} className="text-orange-400 min-w-[150px]" placeholder="https://..." /><span className="text-orange-400">"</span><span className="text-blue-400">{' />'}</span></div>{parseInt(siteData.imageCount) >= 2 && (<div className="mb-2"><span className="text-blue-400">{'<img'}</span> <span className="text-blue-300">src</span>=<span className="text-orange-400">"</span><AutoWidthInput value={siteData.imageSrc2} onChange={(e) => updateData('imageSrc2', e.target.value)} className="text-orange-400 min-w-[150px]" placeholder="https://..." /><span className="text-orange-400">"</span><span className="text-blue-400">{' />'}</span></div>)}{parseInt(siteData.imageCount) >= 3 && (<div className="mb-2"><span className="text-blue-400">{'<img'}</span> <span className="text-blue-300">src</span>=<span className="text-orange-400">"</span><AutoWidthInput value={siteData.imageSrc3} onChange={(e) => updateData('imageSrc3', e.target.value)} className="text-orange-400 min-w-[150px]" placeholder="https://..." /><span className="text-orange-400">"</span><span className="text-blue-400">{' />'}</span></div>)}</div>)}<span className="text-blue-400">{'</div>'}</span></div>
+                            {siteData.showImage === 'yes' && (<div className="ml-4 mt-2 p-3 border-2 border-dashed border-yellow-500/30 rounded bg-slate-800/40 relative"><div className="absolute -top-3 left-3 bg-[#1e1e1e] px-2 text-xs text-yellow-500 font-bold">Gallery Settings</div><div className="flex items-center gap-2 mb-2 mt-1"><span className="text-slate-400 text-xs">{'// Number of images:'}</span><StyledSelect value={siteData.imageCount} onChange={(e) => updateData('imageCount', e.target.value)} options={[{val: "1", label: "1"},{val: "2", label: "2"},{val: "3", label: "3"},]} /></div><div className="mb-2"><span className="text-blue-400">{'<img'}</span> <span className="text-blue-300">src</span>=<span className="text-orange-400">"</span><AutoWidthInput value={siteData.imageSrc} onChange={(e) => updateData('imageSrc', e.target.value)} className="min-w-[150px]" placeholder="https://..." /><span className="text-orange-400">"</span><span className="text-blue-400">{' />'}</span></div>{parseInt(siteData.imageCount) >= 2 && (<div className="mb-2"><span className="text-blue-400">{'<img'}</span> <span className="text-blue-300">src</span>=<span className="text-orange-400">"</span><AutoWidthInput value={siteData.imageSrc2} onChange={(e) => updateData('imageSrc2', e.target.value)} className="min-w-[150px]" placeholder="https://..." /><span className="text-orange-400">"</span><span className="text-blue-400">{' />'}</span></div>)}{parseInt(siteData.imageCount) >= 3 && (<div className="mb-2"><span className="text-blue-400">{'<img'}</span> <span className="text-blue-300">src</span>=<span className="text-orange-400">"</span><AutoWidthInput value={siteData.imageSrc3} onChange={(e) => updateData('imageSrc3', e.target.value)} className="min-w-[150px]" placeholder="https://..." /><span className="text-orange-400">"</span><span className="text-blue-400">{' />'}</span></div>)}</div>)}<span className="text-blue-400">{'</div>'}</span></div>
                         </div><span className="text-blue-400">{'</body>'}</span></div>
                     </div>
                 </div>
@@ -347,7 +375,10 @@ export default function App() {
                     </div>
                     <textarea readOnly value={generateRawHTML()} className="flex-1 bg-black border border-slate-700 rounded-lg p-6 font-mono text-green-400 text-sm resize-none focus:outline-none shadow-2xl" />
                     <div className="mt-4 flex justify-end">
-                        <button onClick={() => { navigator.clipboard.writeText(generateRawHTML()); alert("Copied!"); }} className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-md font-bold flex items-center gap-2"><Download size={20} /> Copy</button>
+                        <button onClick={handleCopyCode} className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-md font-bold flex items-center gap-2">
+                            {isCopied ? <Check size={20} /> : <Download size={20} />} 
+                            {isCopied ? "Copied!" : "Copy"}
+                        </button>
                     </div>
                 </div>
             </div>
